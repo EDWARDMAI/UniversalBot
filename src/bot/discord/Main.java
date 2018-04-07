@@ -40,12 +40,27 @@ public class Main extends ListenerAdapter{
 
     @Override
     public void onMessageReceived(MessageReceivedEvent e){
-        Message objMsg = e.getMessage();
-
-        MessageChannel objChannel = e.getChannel();
+        //Data from message.
         User objUser = e.getAuthor();
-        if(objMsg.getContentDisplay().equals("hello")){
-            objChannel.sendMessage("Hello, " + objUser.getAsMention() + "!").queue();
+        Message objMsg = e.getMessage();
+        MessageChannel objChannel = e.getChannel();
+
+        //Retrieved a command message
+        String message = objMsg.getContentRaw();
+        if(message.startsWith(prefix)){
+            commandHelp(message.substring(1), objUser, objChannel);
+        }
+    }
+
+    //Checks first word of the command string, does whatever the command is.
+    private void commandHelp(String command, User objUser, MessageChannel objChannel){
+        command = command.trim();
+        String[] commands = command.split(" ");
+        if(commands[0].equals("ping")){
+            objChannel.sendMessage(objUser.getAsMention() + " pong.").queue();
+        }
+        else{
+            objChannel.sendMessage(objUser.getAsMention() + " command not recognized.").queue();
         }
     }
 }
