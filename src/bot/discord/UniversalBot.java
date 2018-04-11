@@ -7,16 +7,11 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import net.dv8tion.jda.core.AccountType;
-import net.dv8tion.jda.core.JDA;
-import net.dv8tion.jda.core.JDABuilder;
-import net.dv8tion.jda.core.OnlineStatus;
+import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import net.dv8tion.jda.core.managers.AudioManager;
-
-import javax.security.auth.login.LoginException;
 import java.util.HashMap;
 
 
@@ -32,10 +27,9 @@ public class UniversalBot extends ListenerAdapter{
     }
 
     public void addGuild(Guild guild){
-        //Trackscheduler will have to be in each guild later
         TrackScheduler trackScheduler = new TrackScheduler(guild);
 
-        //Data will be moved into helper classes later
+
         AudioPlayer player = playerManager.createPlayer();
         player.addListener(trackScheduler);
         GuildManager guildManager = new GuildManager(player, trackScheduler);
@@ -88,6 +82,7 @@ public class UniversalBot extends ListenerAdapter{
         }
 
         else if(command.equals("leave")){
+            //may need to pause
             manager.closeAudioConnection();
         }
 
@@ -130,7 +125,32 @@ public class UniversalBot extends ListenerAdapter{
                         trackScheduler.queue(player, track);
                     }
                 }
+                else{
+                    objChannel.sendMessage("error").queue();
+                }
                 manager.setSendingHandler(new AudioPlayerSendHandler(player));
+            }
+        }
+
+        else if(command.equals("forceplay")){
+            TrackScheduler trackScheduler = guildManager.getTrackScheduler();
+            AudioPlayer player = guildManager.getPlayer();
+
+            String identifier = commands[1];
+
+            //Youtube video so we need a YoutubeAudioSourceManager
+            YoutubeAudioSourceManager youtubeManager = new YoutubeAudioSourceManager();
+            AudioItem audioItem = youtubeManager.loadItem(playerManager, new AudioReference(identifier, ""));
+            //Loading in a track and then playing it
+            if(audioItem instanceof AudioTrack){
+                AudioTrack track = (AudioTrack) audioItem;
+                trackScheduler.forcePlay(player, track);
+            }
+            else if(audioItem instanceof AudioPlaylist){
+                objChannel.sendMessage(user + " cannot forceplay a playlist.").queue();
+            }
+            else{
+                objChannel.sendMessage("error").queue();
             }
         }
 
@@ -154,6 +174,27 @@ public class UniversalBot extends ListenerAdapter{
             else {
                 objChannel.sendMessage(user + " player is not paused.").queue();
             }
+        }
+
+        else if(command.equals("np")){
+            TrackScheduler trackScheduler = guildManager.getTrackScheduler();
+            AudioPlayer player = guildManager.getPlayer();
+            trackScheduler.nowPlaying(player, true);
+        }
+
+        else if(command.equals("skip")){
+            AudioPlayer player = guildManager.getPlayer();
+            player.stopTrack();
+        }
+
+        else if(command.equals("queue")){
+            TrackScheduler trackScheduler = guildManager.getTrackScheduler();
+            AudioPlayer player = guildManager.getPlayer();
+            trackScheduler.songList(player);
+        }
+
+        else if(command.equals("seek")){
+
         }
 
         else{
